@@ -23,6 +23,7 @@ class _HomePageState extends State<HomePage> {
   late PageController _pageController;
   int _currentIndex = 0;
   late Timer _timer;
+  List<dynamic> doctors = [];
 
   final List<Map<String, dynamic>> items = [
     {
@@ -95,6 +96,25 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> fetchDoctors() async {
+    final String apiUrl = "https://doctors-list-1.onrender.com/doctors";
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          doctors = data;
+        });
+      } else {
+        print("Error fetching doctors: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Exception: $e");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -125,95 +145,15 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Widget _buildHealthCard(
-      {required String title,
-      required String description1,
-      required String description2,
-      required String imageUrl,
-      required VoidCallback onTap,
-      required Color cardColor,
-      required Color textColor}) {
-    return Container(
-      height: 160,
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.josefinSans(
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                    fontSize: 18,
-                  ),
-                ),
-                Text(
-                  description1,
-                  style: GoogleFonts.josefinSans(color: textColor),
-                ),
-                Text(
-                  description2,
-                  style: GoogleFonts.josefinSans(color: textColor),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: onTap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(120, 40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    'Predict here',
-                    style: GoogleFonts.josefinSans(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: 40,
-            right: 15,
-            child: Image.network(
-              imageUrl,
-              height: 80,
-              width: 80,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        padding:
-            const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 30),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 50, right: 20, left: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 🟢 Header Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -227,15 +167,10 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Row(
                       children: [
-                        Text(
-                          'Welcome to ',
-                          style: GoogleFonts.josefinSans(),
-                        ),
-                        Text(
-                          'Sehatसाथी',
-                          style:
-                              GoogleFonts.baloo2(fontWeight: FontWeight.bold),
-                        ),
+                        Text('Welcome to ', style: GoogleFonts.josefinSans()),
+                        Text('Sehatसाथी',
+                            style: GoogleFonts.baloo2(
+                                fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ],
@@ -257,8 +192,10 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             const SizedBox(height: 20),
+
+            // 🟢 PageView Section (Fixed height)
             SizedBox(
-              height: 200,
+              height: 200, // Ensures proper rendering
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: items.length,
@@ -347,38 +284,136 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 20),
-            _buildHealthCard(
-                title: "Check Your Health Now!",
-                description1: "Predict Your Diabetes Risk",
-                description2: "Get Instant Analysis!",
-                imageUrl:
-                    "https://cdn-icons-png.flaticon.com/128/16867/16867357.png",
-                onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => DiabetesPredictionPage())),
-                cardColor: maingreen,
-                textColor: Colors.white),
-            _buildHealthCard(
-                title: "Check Your Neurological Health!",
-                description1: "Analyze Your Neurology Risk",
-                description2: "Get Instant Analysis!",
-                imageUrl:
-                    "https://cdn-icons-png.flaticon.com/128/3974/3974920.png",
-                onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => NeurologyAnalysisPage())),
-                cardColor: maingreen2,
-                textColor: maingreen),
-            _buildHealthCard(
-                title: "Check Your Heart Health!",
-                description1: "Analyze Your Heart Risk",
-                description2: "Get Instant Analysis!",
-                imageUrl:
-                    "https://cdn-icons-png.flaticon.com/128/4773/4773193.png",
-                onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => HeartDiseasePage())),
-                cardColor: maingreen,
-                textColor: Colors.white),
+
+            // 🟢 Doctor List Section (Fixed ListView issue)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Popular Doctors',
+                    style: GoogleFonts.josefinSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Expanded(
+                      child: FutureBuilder(
+                    future: fetchDoctors(),
+                    builder: (context, snapshot) {
+                      if (doctors.isEmpty) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      return ListView.builder(
+                        itemCount: doctors.length,
+                        itemBuilder: (context, index) {
+                          var doctor = doctors[index];
+
+                          return Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                    color: Colors.grey.shade300, width: 1.0),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 35,
+                                  backgroundImage:
+                                      NetworkImage(doctor["imageUrl"]),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        doctor["name"],
+                                        style: GoogleFonts.josefinSans(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        doctor["specialty"],
+                                        style: GoogleFonts.josefinSans(
+                                          fontSize: 14,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.star,
+                                              color: Colors.amber),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            doctor["rank"].toString(),
+                                            style: GoogleFonts.josefinSans(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            "Fee: ",
+                                            style: GoogleFonts.josefinSans(
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Text(
+                                            "₹${doctor["fee"]}",
+                                            style: GoogleFonts.josefinSans(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                                content: Text(
+                                                    "Booking For ${doctor["name"]}")));
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: maingreen,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8)),
+                                      ),
+                                      child: const Text("Book Now"),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  )),
+                ],
+              ),
+            )
           ],
         ),
       ),
